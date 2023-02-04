@@ -1,0 +1,343 @@
+Configuration of Certification Authority and Implementation of Transport
+
+Layer Security over HTTP
+
+On linux terminal inside VirtualBox the following commands need to be given to generate Transport Layer
+Security over HTTP:
+1. Preparing the environment
+Moving to the root using
+---------------------------
+sudo -i
+
+See tree of files inside the root:
+-----------------------------------
+tree
+
+Creating directory:
+--------------------
+mkdir -p ca/{root-ca,sub-ca,server}/{private,certs,newcerts,crl,csr}
+
+See if the folders are created successfully:
+--------------------------------------------
+tree ca
+
+Changing the root of ca and sub ca private folder
+---------------------------------------------------
+chmod -v 700 ca/{root-ca,sub-ca,server}/private
+
+Creating file index in both root ca and sub ca
+------------------------------------------------
+touch ca/{root-ca,sub-ca}/index
+
+Seeing ca tree again
+--------------------
+tree ca
+
+Generating hexadecimal random number of 16 charecter
+----------------------------------------------------
+openssl rand -hex 16
+
+writing serial number of root ca
+----------------------------------
+openssl rand -hex 16 > ca/root-ca/serial
+
+writing serial number of sub ca
+-------------------------------
+openssl rand -hex 16 > ca/sub-ca/serial
+
+tree ca
+
+moving to ca directory
+----------------------
+cd ca
+
+
+
+
+2. Generating private key for root ca, sub ca and server
+Public key for rootCA
+----------------------
+openssl genrsa -aes256 -out root-ca/private/ca.key 4096
+
+
+Public key for subCA
+---------------------
+openssl genrsa -aes256 -out sub-ca/private/sub-ca.key 4096
+
+Public key for server
+----------------------
+openssl genrsa -out server/private/server.key 2048
+
+reviewing the change
+---------------------
+tree
+
+
+
+
+3. Generating certificates
+Root-CA
+Creating root ca.config
+--------------------------
+gedit root-ca/root-ca.conf
+
+Inserting the code from the link into the root-ca.config
+------------------------------------------------------------
+https://sites.google.com/view/talhasiddique/home#h.d7q75ywapa44
+Or from code: 1. root-ca.conf code at the bottom
+Save and exit
+
+:wq
+
+tree
+
+Moving inside root-ca
+-----------------------
+cd root-ca
+
+Generating root ca certificate
+--------------------------------
+openssl req -config root-ca.conf -key private/ca.key -new -x509 -days 7305 -sha256 -extensions v3_ca -out certs/ca.crt
+
+Ensuring that the certificate has been created properly
+--------------------------------------------------------
+openssl x509 -noout -in certs/ca.crt -text
+
+Moving a step back and then to sub-ca
+-------------------------------------
+cd ../sub-ca
+
+Sub-CA
+Creating sub-ca.config
+------------------------
+gedit sub-ca.conf
+
+Inserting the code into sub-ca.config file
+------------------------------------------
+https://sites.google.com/view/talhasiddique/home#h.1jp386wy0cba Or from 2. sub-ca.conf code
+at the bottom
+Saving and exiting
+
+:wq
+
+Seeing the directory once again
+-------------------------------
+tree
+
+Requesting for sub ca certificate signing request.
+--------------------------------------------------
+openssl req -config sub-ca.conf -new -key private/sub-ca.key -sha256 -out csr/sub-ca.csr
+
+moving to the previous folder
+----------------------------
+cd -
+
+Signing the request of sub ca by root ca
+-----------------------------------------
+openssl ca -config root-ca.conf -extensions v3_intermediate_ca -days 3652 -notext -in ../sub-ca/csr/sub-ca.csr -out ../sub-ca/certs/sub-ca.crt
+
+to confirm insert “y”
+
+See directory
+
+tree
+
+→.pem file has been generated
+See the signing
+--------------------
+cat index
+
+→Root ca signed sub ca
+Seeing detail
+--------------------------
+openssl x509 -noout -text -in ../sub-ca/certs/sub-ca.crt
+
+4. Configuring server
+Moving to server
+---------------------
+cd ../server
+
+Generating certificate signing request from server
+--------------------------------------------------
+openssl req -key private/server.key -new -sha256 -out csr/server.csr
+
+moving to sub ca to sign the server’s certificate
+------------------------------------------------------
+cd ../sub-ca
+
+Sub ca signing certificate request of server
+--------------------------------------------------
+openssl ca -config sub-ca.conf -extensions server_cert -days 365 -notext -in ../server/csr/server.csr -out ../server/certs/server.crt
+
+seeing detail
+--------------
+cat index
+
+moving to certs folder to see certificate of server
+--------------------------------------------------
+cd ../server/certs/
+
+See the directory by using command:
+--------------------------------------
+ls
+
+→ We can see that the server.crt file has been generated
+
+Now, concating sub-ca.crt and server.crt and naming the new file chained.crt
+-----------------------------------------------------------------------------
+cat server.crt ../../sub-ca/certs/sub-ca.crt > chained.crt
+
+Seeing the change
+--------------------
+ls
+
+moving back to server directory
+--------------------------------
+cd ..
+
+
+
+
+
+
+
+
+
+echo "127.0.0.2 www.verysecureserver.com" >> /etc/hosts
+ping www.verysecureserver.com
+
+Turning on the ssl port
+---------------------------
+openssl s_server -accept 443 -www -key private/server.key -cert certs/server.crt -CAfile ../sub-ca/certs/sub-ca.crt
+
+→Opening new terminal
+Again to root
+--------------
+sudo -i
+
+See the port number used by different Ip addresses
+------------------------------------------------
+ss -ntl
+sudo apt update
+
+to download or transfer files/data from or to a server using FTP, HTTP, HTTPS,
+SCP, SFTP, SMB and other supported protocols, installing curl:
+--------------------------------------------------------------
+sudo apt install curl
+
+copying the certificate to ca certificate folder
+-------------------------------------------------
+cp ca/root-ca/certs/ca.crt /usr/local/share/ca-certificates/
+
+Updating ca certificate folder
+--------------------------------
+update-ca-certificates -v
+
+
+
+
+OPen new terminal
+-----------------------
+sudo -i
+tree ca
+
+finally copy to newcerts directory
+--------------------------------------
+cp /root/ca/root-ca/newcerts/21DE5190AF587104493F1750892E9B86.pem ~decoder/
+cp /root/ca/sub-ca/newcerts/ACB9E41C001BD6E31714199EF459CA4C.pem ~decoder/
+
+
+cp /root/ca/root-ca/certs/ca.crt /home/decoder/certificate
+cp /root/ca/sub-ca/certs/sub-ca.crt /home/decoder/certificate/
+cp /root/ca/server/certs/chained.crt /home/decoder/certificate/
+cp /root/ca/server/certs/server.crt /home/decoder/certificate/
+cp /root/ca/server/private/server.key /home/decoder/certificate/
+
+
+Next go to this location
+--------------------------------------------
+sudo -i
+cd /opt/lampp/etc/extra
+chmod 777 httpd-ssl.conf 
+gedit httpd-ssl.conf
+
+line 106
+---------
+change server.crt location with your server.crt file location
+{106 SSLCertificateFile "/home/decoder/certificate/server.crt"}
+
+line 116
+---------
+change server.key location with your server.key file location
+{116 SSLCertificateKeyFile "/home/decoder/certificate/server.key"}
+
+line 136
+---------
+change full line with your location
+{136 SSLCACertificatePath "/home/decoder/certificate"}
+
+--------------------------
+For auto redirect to https
+---------------------------
+<VirtualHost _default_:80>
+ServerName www.example.com:80
+ServerAdmin you@example.com
+Redirect permanent / https://www.verysecureserver.com
+</VirtualHost>
+
+
+Now we have to remove all file from htdocs
+------------------------------------------
+[open new terminal]
+
+$ sudo -i
+# cd /opt/lampp/htdocs
+# ls
+# rm -r dashboard img webalizer
+# rm applications.html  bitnami.css  favicon.ico  index.php
+
+[Now make a html file and write some html code]
+# touch index.html
+# gedit index.html
+
+save and exit
+
+
+
+
+Now on the browser
+Settings → privacy and security → view certificate → authorities → import → select the file
+→open → select purpose → {view: to see the certificate} → OK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

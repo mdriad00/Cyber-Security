@@ -1,0 +1,22 @@
+1.Install ufw package
+
+sudo apt install ufw
+
+2.Set default rules for ufw firewall
+ufw default allow outgoing
+ufw default deny incoming
+
+3. Enable ssh
+ufw allow ssh
+
+4. Enable ufw
+ufw enable
+*Ufw will now be active.
+
+5.Allow port 80 (http), 443(https), and 53(DNS)
+ufw allow 80
+ufw allow 443
+ufw allow 53
+
+
+sudo netstat -tulpn | grep LISTEN

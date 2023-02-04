@@ -1,0 +1,53 @@
+At first Download and install xampp-> https://www.apachefriends.org/download.html
+-----------------------------------
+[In download folder, edit file name xampp.run then open terminal here]
+
+sudo -s 
+sudo chmod a+rwx xampp.run
+./xampp.run
+
+[N.B: If you have apache already, remove it]
+
+$ systemctl status apache2
+$ sudo apt-get purge apache2 apache2-utils apache2.2-bin apache2-common
+$ sudo apt-get autoremove
+$ systemctl status apache2
+
+Choice 1: TO START XAMPP
+--------------------------
+$ sudo -i
+# cd /opt/lampp
+# chmod a+rwx manager-linux-x64.run
+# ./manager-linux-x64.run
+
+Choice 2: CREATE XAMPP SHORTCUT
+--------------------------------
+cd /usr/share/applications
+
+Command:
+cd ~/.local/share/applications/
+sudo touch xampp.desktop
+sudo gedit xampp.desktop
+
+Paste following to the file content:
+
+[Desktop Entry]
+Encoding=UTF-8
+Name=XAMPP Control Panel
+Comment=Start and Stop XAMPP
+Exec=sudo /opt/lampp/manager-linux-x64.run
+Icon=/opt/lampp/htdocs/favicon.ico
+Categories=Application
+Type=Application
+Terminal=true
+
+****Save the file, now you have the Xampp shortcut available on start menu****
+
+
+
+
+
+
+
+
+

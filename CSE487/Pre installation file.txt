@@ -1,0 +1,13 @@
+1. sudo apt update
+
+2. sudo apt install tree
+
+3. sudo apt install net-tools
+
+4. sudo apt install curl
+
+5. sudo apt install bind9
+
+6. sudo apt install vim
+
+7. sudo apt install build-essential dkms linux-headers-generic
